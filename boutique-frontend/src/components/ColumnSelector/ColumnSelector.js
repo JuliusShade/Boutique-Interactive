@@ -1,4 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+
+useEffect(() => {
+    const fetchColumns = async () => {
+        const response = await fetch('/api/columns');
+        const data = await response.json();
+        setColumns(data);
+    };
+
+    fetchColumns();
+}, []);
 
 const ColumnSelector = ({ columns, selectedColumns, setSelectedColumns }) => {
     const handleChange = (event) => {
