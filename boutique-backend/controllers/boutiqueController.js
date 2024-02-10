@@ -12,7 +12,16 @@ const BoutiqueController = {
     }
   },
 
-  // You can add more controller methods for other CRUD operations
+  getSelectableColumns: async (req, res) => {
+    try {
+      const boutiques = await boutiqueModel.getSelectableColumns();
+      res.json(boutiques);
+    } catch (error) {
+      res.status(500).json({ message: error.message })
+    }
+  }
 };
+
+
 
 module.exports = BoutiqueController;

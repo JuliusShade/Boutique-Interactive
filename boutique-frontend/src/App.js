@@ -7,24 +7,42 @@ import './App.css';
 
 function App() {
   const [selectedColumns, setSelectedColumns] = useState([]);
-  const [data, setData] = useState({ columns: [], rows: [] });
-  // other states for sorting, filtering, etc.
+  const [reportData, setReportData] = useState({ columns: [], rows: [] });
 
-  //Functions to handle changes in sorting, filtering, and saving reports
+  // Function to fetch the report data based on selected columns
+  const fetchReportData = async () => {
+    // This would be your actual API call to fetch the report data
+    // For demonstration, it's a placeholder function
+    console.log('Fetching report data for columns: ', selectedColumns);
+    // Placeholder data
+    setReportData({
+      columns: selectedColumns,
+      rows: [
+        // This would be the actual data fetched from the backend
+      ],
+    });
+  };
 
+  // Handle the save report form submission
+  const handleSaveReport = (reportName) => {
+    // You would save the report to the backend here
+    console.log('Saving report:', reportName, selectedColumns);
+  };
+
+  console.log('App state - selectedColumns:', selectedColumns);
   return (
     <div className="App">
+      <h1>Dynamic Report Builder</h1>
       <ColumnSelector
-        columns={['Column1', 'Column2']}
         selectedColumns={selectedColumns}
         setSelectedColumns={setSelectedColumns}
       />
       <SortingFiltering
-        onSortChange={/* your handler function */}
-        onFilterChange={/* your handler function */}
+      // Pass the necessary props or callbacks for sorting and filtering
       />
-      <DataTable data={data} />
-      <SaveReportForm onSave={/* your handler function */} />
+      <button onClick={fetchReportData}>Generate Report</button>
+      <DataTable data={reportData} />
+      <SaveReportForm onSave={handleSaveReport} />
     </div>
   );
 }

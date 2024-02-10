@@ -14,7 +14,13 @@ const getAllBoutiques = async () => {
   }
 };
 
+const getSelectableColumns = async () => {
+  const result = await pool.query('SELECT b.customer_number, b.type, b.active, b1.address_name, b1.street, b1.street2, b1.city, b1.state, b1.zipcode, b1.type FROM boutiques as b INNER JOIN boutique_address AS b1 ON b.customer_number = b1.customer_number');
+  return result.rows;
+}
+
 // Export the function so it can be used in other parts of your application
 module.exports = {
   getAllBoutiques,
+  getSelectableColumns
 };

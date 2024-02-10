@@ -4,5 +4,6 @@ const router = express.Router();
 
 // Route that handles GET request to '/items' endpoint
 router.get('/', BoutiqueController.getAllBoutiques);
+router.get('/columns', BoutiqueController.getSelectableColumns)
 
 module.exports = router;
