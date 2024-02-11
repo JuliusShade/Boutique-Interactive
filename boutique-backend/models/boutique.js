@@ -41,26 +41,52 @@ const constructSafeQuery = (selectedColumns, filters) => {
     if (col === 'customer_number') {
       return 'b.customer_number'; // Assuming you want to refer to the 'boutiques' table
     }
-    return col.includes('.') ? col : `b.${col}`; // Prefix non-aliased columns with 'b.'
+    if (col === 'level') {
+      return 'b.level'; // Assuming you want to refer to the 'boutiques' table
+    }
+    if (col === 'name') {
+      return 'b.name'; // Assuming you want to refer to the 'boutiques' table
+    }
+    if (col === 'active') {
+      return 'b.active'; // Assuming you want to refer to the 'boutiques' table
+    }
+    return col.includes('.') ? col : `b1.${col}`; // Prefix non-aliased columns with 'b.'
   });
 
-  const query = {
-    text: `SELECT ${prefixedColumns.join(', ')} FROM boutiques as b INNER JOIN boutique_address AS b1 ON b.customer_number = b1.customer_number WHERE `,
-    values: [],
+  const filterValues = [];
+  const filterConditions = Object.keys(filters).map((key, index) => {
+    filterValues.push(filters[key].toLowerCase()); // Convert filter value to lowercase for case-insensitive comparison
+
+    // Determine the correct table alias for each filter key based on your column prefixing logic
+    let prefixedKey;
+    if (
+      key === 'customer_number' ||
+      key === 'level' ||
+      key === 'name' ||
+      key === 'active'
+    ) {
+      prefixedKey = `b.${key}`; // Columns that belong to the 'boutiques' table
+    } else {
+      prefixedKey = `b1.${key}`; // Assuming all other columns belong to 'boutique_address'
+    }
+
+    // Apply LOWER for case-insensitive comparison, correctly using the table alias
+    return `LOWER(${prefixedKey}) = LOWER($${index + 1})`;
+  });
+
+  // Construct the WHERE clause, or leave it empty if there are no filters
+  const whereClause =
+    filterConditions.length > 0
+      ? ` WHERE ${filterConditions.join(' AND ')}`
+      : '';
+
+  // Construct the final query
+  const queryText = `SELECT ${prefixedColumns.join(', ')} FROM boutiques as b INNER JOIN boutique_address AS b1 ON b.customer_number = b1.customer_number${whereClause}`;
+
+  return {
+    text: queryText,
+    values: filterValues,
   };
-
-  const filterKeys = Object.keys(filters);
-  if (filterKeys.length) {
-    query.text += filterKeys
-      .map((key, index) => `${key} = $${index + 1}`)
-      .join(' AND ');
-    query.values = Object.values(filters);
-  } else {
-    // Remove WHERE clause if no filters are provided
-    query.text = query.text.replace('WHERE ', '');
-  }
-
-  return query;
 };
 
 const getReportData = async (selectedColumns, filters) => {
@@ -73,9 +99,44 @@ const getReportData = async (selectedColumns, filters) => {
   }
 };
 
+const createReportTable = async (tableName, columns) => {
+  const columnDefinitions = columns
+    .map((column) => `${column} TEXT`)
+    .join(', ');
+  const query = `CREATE TABLE ${tableName} (${columnDefinitions})`;
+  await pool.query(query);
+};
+
+const insertReportData = async (tableName, columns, data) => {
+  // Construct placeholders for parameterized query
+  const placeholders = data
+    .map(
+      (_, rowIndex) =>
+        `(${columns.map((_, colIndex) => `$${rowIndex * columns.length + colIndex + 1}`).join(', ')})`
+    )
+    .join(', ');
+
+  // Flatten the data for parameterized query
+  const flattenedData = data.reduce((acc, row) => {
+    const rowData = columns.map((col) => row[col]);
+    return [...acc, ...rowData];
+  }, []);
+
+  const queryText = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES ${placeholders}`;
+
+  try {
+    await pool.query(queryText, flattenedData);
+  } catch (error) {
+    console.error('Error inserting report data:', error);
+    throw error;
+  }
+};
+
 // Export the function so it can be used in other parts of your application
 module.exports = {
   getAllBoutiques,
   getSelectableColumns,
   getReportData,
+  createReportTable,
+  insertReportData,
 };
