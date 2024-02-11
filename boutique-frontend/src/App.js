@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import ColumnSelector from './components/ColumnSelector/ColumnSelector';
-import Filtering from './components/Filter/Filtering';
+import SortingFiltering from './components/Filter/Filtering';
 import DataTable from './components/DataTable/DataTable';
 import SaveReportForm from './components/SaveReportForm/SaveReportForm';
+import ReportList from './components/ReportList/ReportList';
 import './App.css';
 
 function App() {
@@ -11,16 +12,23 @@ function App() {
   const [sortConfig, setSortConfig] = useState({});
   const [filters, setFilters] = useState({});
 
-  const handleFilterChange = (column, value) => {
-    setFilters((currentFilters) => {
-      const updatedFilters = { ...currentFilters };
-      if (value) {
-        updatedFilters[column] = value; // Set or update the filter value
-      } else {
-        delete updatedFilters[column]; // Remove the filter if the value is empty
-      }
-      return updatedFilters;
-    });
+  const [sortCriteria, setSortCriteria] = useState({
+    column: null,
+    direction: 'ASC',
+  });
+
+  const updateSortCriteria = (column, direction) => {
+    setSortCriteria({ column, direction });
+  };
+
+  const handleSortChange = (column, direction) => {
+    setSortCriteria({ column, direction });
+    fetchReportData(); // Optionally, immediately fetch/report data based on new sort criteria
+  };
+
+  const handleFilterChange = (filters) => {
+    setFilters(filters);
+    fetchReportData(); // Optionally, immediately fetch/report data based on new filter criteria
   };
 
   const applyFiltersAndFetchData = () => {
@@ -31,12 +39,12 @@ function App() {
   // Function to fetch the report data based on selected columns
   const fetchReportData = async () => {
     try {
-      const response = await fetch('/api/boutiques/report', {
+      const response = await fetch(`/api/boutiques/report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ selectedColumns, filters }), // Add real filter logic here
+        body: JSON.stringify({ selectedColumns, filters, sortCriteria }), // Add real filter logic here
       });
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -51,7 +59,6 @@ function App() {
     }
   };
 
-  // Handle the save report form submission
   const handleSaveReport = async (reportName) => {
     try {
       const response = await fetch('/api/boutiques/saveReport', {
@@ -62,6 +69,8 @@ function App() {
         body: JSON.stringify({
           reportName,
           selectedColumns,
+          sortCriteria,
+          filters, // Include filter values in the request body
           reportData: reportData.rows,
         }),
       });
@@ -86,13 +95,15 @@ function App() {
         selectedColumns={selectedColumns}
         setSelectedColumns={setSelectedColumns}
       />
-      <Filtering
+      <SortingFiltering
         availableColumns={selectedColumns}
         onFilterChange={handleFilterChange}
+        onSortChange={handleSortChange}
       />
       <button onClick={applyFiltersAndFetchData}>Generate Report</button>
       <DataTable data={reportData} />
       <SaveReportForm onSave={handleSaveReport} />
+      <ReportList />
     </div>
   );
 }

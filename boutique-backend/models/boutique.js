@@ -35,66 +35,73 @@ const getSelectableColumns = async () => {
   }
 };
 
-const constructSafeQuery = (selectedColumns, filters) => {
+const constructSafeQuery = (selectedColumns, filters, sortCriteria) => {
   // Prefix columns with the appropriate table alias
   const prefixedColumns = selectedColumns.map((col) => {
-    if (col === 'customer_number') {
-      return 'b.customer_number'; // Assuming you want to refer to the 'boutiques' table
-    }
-    if (col === 'level') {
-      return 'b.level'; // Assuming you want to refer to the 'boutiques' table
-    }
-    if (col === 'name') {
-      return 'b.name'; // Assuming you want to refer to the 'boutiques' table
-    }
-    if (col === 'active') {
-      return 'b.active'; // Assuming you want to refer to the 'boutiques' table
-    }
-    return col.includes('.') ? col : `b1.${col}`; // Prefix non-aliased columns with 'b.'
+    if (col === 'customer_number') return 'b.customer_number';
+    if (col === 'level') return 'b.level';
+    if (col === 'name') return 'b.name';
+    if (col === 'active') return 'b.active';
+    return col.includes('.') ? col : `b1.${col}`; // Default to b1 for other columns
   });
 
-  const filterValues = [];
-  const filterConditions = Object.keys(filters).map((key, index) => {
-    filterValues.push(filters[key].toLowerCase()); // Convert filter value to lowercase for case-insensitive comparison
+  // Directly incorporate filter values into the query, safely
+  const filterConditions = Object.entries(filters)
+    .map(([column, value]) => {
+      if (value) {
+        // Assuming all filters are to be case-insensitive and values need to be escaped
+        const escapedValue = `'${value.replace(/'/g, "''").toLowerCase()}'`; // Basic SQL escaping
+        return `LOWER(${column}) = LOWER(${escapedValue})`;
+      }
+      return null;
+    })
+    .filter((condition) => condition !== null);
 
-    // Determine the correct table alias for each filter key based on your column prefixing logic
-    let prefixedKey;
-    if (
-      key === 'customer_number' ||
-      key === 'level' ||
-      key === 'name' ||
-      key === 'active'
-    ) {
-      prefixedKey = `b.${key}`; // Columns that belong to the 'boutiques' table
-    } else {
-      prefixedKey = `b1.${key}`; // Assuming all other columns belong to 'boutique_address'
-    }
-
-    // Apply LOWER for case-insensitive comparison, correctly using the table alias
-    return `LOWER(${prefixedKey}) = LOWER($${index + 1})`;
-  });
-
-  // Construct the WHERE clause, or leave it empty if there are no filters
   const whereClause =
     filterConditions.length > 0
       ? ` WHERE ${filterConditions.join(' AND ')}`
       : '';
 
-  // Construct the final query
-  const queryText = `SELECT ${prefixedColumns.join(', ')} FROM boutiques as b INNER JOIN boutique_address AS b1 ON b.customer_number = b1.customer_number${whereClause}`;
+  // Handle sortCriteria as before, but ensure no placeholders are used
+  let orderByClause = '';
+  if (sortCriteria && sortCriteria.column && sortCriteria.direction) {
+    const safeDirection = ['ASC', 'DESC'].includes(
+      sortCriteria.direction.toUpperCase()
+    )
+      ? sortCriteria.direction.toUpperCase()
+      : 'ASC';
+    const safeColumn = prefixedColumns.find((prefixedCol) =>
+      prefixedCol.endsWith(sortCriteria.column)
+    )
+      ? sortCriteria.column
+      : null;
+    if (safeColumn) {
+      const isBoutiqueColumn = [
+        'customer_number',
+        'level',
+        'name',
+        'active',
+      ].includes(safeColumn);
+      const tableAlias = isBoutiqueColumn ? 'b' : 'b1';
+      const columnWithAlias = `${tableAlias}.${safeColumn}`;
+      orderByClause = ` ORDER BY ${columnWithAlias} ${safeDirection}`;
+    }
+  }
 
-  return {
-    text: queryText,
-    values: filterValues,
-  };
+  // Construct the final query without placeholders for dynamic values
+  const queryText = `SELECT ${prefixedColumns.join(',')} FROM boutiques as b INNER JOIN boutique_address AS b1 ON b.customer_number = b1.customer_number${whereClause}${orderByClause}`;
+  console.log('Query Text:', queryText);
+
+  return { text: queryText };
 };
 
-const getReportData = async (selectedColumns, filters) => {
+const getReportData = async (selectedColumns, filters, sortCriteria) => {
   try {
-    const query = constructSafeQuery(selectedColumns, filters);
+    const query = constructSafeQuery(selectedColumns, filters, sortCriteria);
     const result = await pool.query(query.text, query.values);
     return result.rows;
   } catch (error) {
+    console.error('Error fetching report data:', error);
     throw error;
   }
 };
@@ -108,24 +115,10 @@ const createReportTable = async (tableName, columns) => {
 };
 
 const insertReportData = async (tableName, columns, data) => {
-  // Construct placeholders for parameterized query
-  const placeholders = data
-    .map(
-      (_, rowIndex) =>
-        `(${columns.map((_, colIndex) => `$${rowIndex * columns.length + colIndex + 1}`).join(', ')})`
-    )
-    .join(', ');
-
-  // Flatten the data for parameterized query
-  const flattenedData = data.reduce((acc, row) => {
-    const rowData = columns.map((col) => row[col]);
-    return [...acc, ...rowData];
-  }, []);
-
-  const queryText = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES ${placeholders}`;
+  const queryText = `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES ($1, $2)`;
 
   try {
-    await pool.query(queryText, flattenedData);
+    await pool.query(queryText, [data[0].report_name, data[0].query_text]);
   } catch (error) {
     console.error('Error inserting report data:', error);
     throw error;
@@ -139,4 +132,5 @@ module.exports = {
   getReportData,
   createReportTable,
   insertReportData,
+  constructSafeQuery,
 };

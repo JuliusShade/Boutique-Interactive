@@ -1,13 +1,10 @@
 const cors = require('cors');
 
-// CORS middleware to allow cross-origin requests
+// Define CORS options
 const corsOptions = {
-  origin: 'http://localhost:5000', // or the specific URL of your frontend application
+  origin: 'http://localhost:5000', // Adjust this to match your frontend application's URL
   optionsSuccessStatus: 200,
 };
 
-const enableCors = cors(corsOptions);
-
-module.exports = {
-  enableCors,
-};
+// Create and export CORS middleware with your options
+module.exports = cors(corsOptions);
