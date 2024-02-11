@@ -7,9 +7,8 @@ const ColumnSelector = ({ columns, selectedColumns, setSelectedColumns }) => {
     const fetchColumns = async () => {
       try {
         const response = await fetch('/api/boutiques/columns');
-        const data = await response.json();
-        console.log('Fetched columns data:', data); // It's good to keep this log
-        const columnNames = data.map((item) => item.address_name); // Extracting the names
+        const columnNames = await response.json(); // This should directly be an array of column names
+        console.log('Fetched columns data:', columnNames); // Log to confirm
         setAvailableColumns(columnNames);
       } catch (error) {
         console.error('Error fetching columns:', error);

@@ -8,19 +8,38 @@ import './App.css';
 function App() {
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [reportData, setReportData] = useState({ columns: [], rows: [] });
+  const [sortConfig, setSortConfig] = useState({});
+  const [filters, setFilters] = useState({});
+
+  const handleSortChange = (sortKey) => {
+    setSortConfig({ ...sortConfig, sortKey });
+  };
+
+  const handleFilterChange = (filterKey, filterValue) => {
+    setFilters({ ...filters, [filterKey]: filterValue });
+  };
 
   // Function to fetch the report data based on selected columns
   const fetchReportData = async () => {
-    // This would be your actual API call to fetch the report data
-    // For demonstration, it's a placeholder function
-    console.log('Fetching report data for columns: ', selectedColumns);
-    // Placeholder data
-    setReportData({
-      columns: selectedColumns,
-      rows: [
-        // This would be the actual data fetched from the backend
-      ],
-    });
+    try {
+      const response = await fetch('/api/boutiques/report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ selectedColumns, filters: {} }), // Add real filter logic here
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      setReportData({
+        columns: selectedColumns,
+        rows: data,
+      });
+    } catch (error) {
+      console.error('Failed to fetch report data:', error);
+    }
   };
 
   // Handle the save report form submission
@@ -38,7 +57,8 @@ function App() {
         setSelectedColumns={setSelectedColumns}
       />
       <SortingFiltering
-      // Pass the necessary props or callbacks for sorting and filtering
+        onSortChange={handleSortChange}
+        onFilterChange={handleFilterChange}
       />
       <button onClick={fetchReportData}>Generate Report</button>
       <DataTable data={reportData} />
