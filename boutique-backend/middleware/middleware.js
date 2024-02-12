@@ -2,7 +2,7 @@ const cors = require('cors');
 
 // Define CORS options
 const corsOptions = {
-  origin: 'http://localhost:5000', // Adjust this to match your frontend application's URL
+  origin: 'http://localhost:3001', // Adjust this to match your frontend application's URL
   optionsSuccessStatus: 200,
 };
 
