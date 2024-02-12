@@ -3,7 +3,7 @@ const enableCors = require('./middleware/middleware.js');
 const boutiqueRoutes = require('./routes/boutiqueRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
 const app = express();
-const port = process.env.PORT || 5000;
+const port = 3000;
 
 // Middleware to parse JSON
 app.use(express.json());
