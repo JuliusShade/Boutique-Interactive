@@ -6,7 +6,9 @@ const ColumnSelector = ({ columns, selectedColumns, setSelectedColumns }) => {
   useEffect(() => {
     const fetchColumns = async () => {
       try {
-        const response = await fetch('/api/boutiques/columns');
+        const response = await fetch(
+          `${process.env.REACT_APP_HOST_NAME}/api/boutiques/columns`
+        );
         const columnNames = await response.json(); // This should directly be an array of column names
         console.log('Fetched columns data:', columnNames); // Log to confirm
         setAvailableColumns(columnNames);

@@ -12,7 +12,9 @@ function ReportList() {
   // Function to fetch reports from the backend
   const fetchReports = async () => {
     try {
-      const response = await fetch('/api/reports');
+      const response = await fetch(
+        `${process.env.REACT_APP_HOST_NAME}/api/reports`
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -36,13 +38,16 @@ function ReportList() {
   // Function to delete selected reports
   const deleteSelectedReports = async () => {
     try {
-      const response = await fetch('/api/reports', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reportIds: selectedRows }),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_HOST_NAME}/api/reports`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reportIds: selectedRows }),
+        }
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }

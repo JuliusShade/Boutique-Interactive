@@ -9,17 +9,12 @@ import './App.css';
 function App() {
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [reportData, setReportData] = useState({ columns: [], rows: [] });
-  const [sortConfig, setSortConfig] = useState({});
   const [filters, setFilters] = useState({});
 
   const [sortCriteria, setSortCriteria] = useState({
     column: null,
     direction: 'ASC',
   });
-
-  const updateSortCriteria = (column, direction) => {
-    setSortCriteria({ column, direction });
-  };
 
   const handleSortChange = (column, direction) => {
     setSortCriteria({ column, direction });
@@ -39,13 +34,16 @@ function App() {
   // Function to fetch the report data based on selected columns
   const fetchReportData = async () => {
     try {
-      const response = await fetch(`/api/boutiques/report`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ selectedColumns, filters, sortCriteria }), // Add real filter logic here
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_HOST_NAME}/api/boutiques/report`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ selectedColumns, filters, sortCriteria }), // Add real filter logic here
+        }
+      );
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -61,19 +59,22 @@ function App() {
 
   const handleSaveReport = async (reportName) => {
     try {
-      const response = await fetch('/api/boutiques/saveReport', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          reportName,
-          selectedColumns,
-          sortCriteria,
-          filters, // Include filter values in the request body
-          reportData: reportData.rows,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_HOST_NAME}/api/boutiques/saveReport`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            reportName,
+            selectedColumns,
+            sortCriteria,
+            filters, // Include filter values in the request body
+            reportData: reportData.rows,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
