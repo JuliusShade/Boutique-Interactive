@@ -3,6 +3,7 @@ const cors = require('cors');
 const enableCors = require('./middleware/middleware.js');
 const boutiqueRoutes = require('./routes/boutiqueRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
+
 const app = express();
 const port = 3000;
 
@@ -11,6 +12,10 @@ app.use(cors());
 
 // Middleware to parse JSON
 app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send('Welcome to my backend server!');
+});
 
 // Use boutique routes with '/api/boutique' as the base path
 app.use('/api/boutiques', boutiqueRoutes);
