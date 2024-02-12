@@ -5,11 +5,11 @@ const reportsRoutes = require('./routes/reportsRoutes');
 const app = express();
 const port = 3000;
 
+// Enable CORS for all routes
+app.use(cors());
+
 // Middleware to parse JSON
 app.use(express.json());
-
-// Enable CORS for the frontend to communicate with the backend
-app.use(enableCors); // Using the middleware directly
 
 // Use boutique routes with '/api/boutique' as the base path
 app.use('/api/boutiques', boutiqueRoutes);
