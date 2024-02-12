@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const enableCors = require('./middleware/middleware.js');
 const boutiqueRoutes = require('./routes/boutiqueRoutes');
 const reportsRoutes = require('./routes/reportsRoutes');
