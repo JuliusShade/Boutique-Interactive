@@ -44,6 +44,6 @@ For any issues or questions, please open an issue in the repository or contact t
 
 ## Contributions
 
-Contributions to the Dynamic Report Builder are welcome. Please read the contributing guidelines in the repository before making a pull request.
+Contributions to the Dynamic Report Builder are welcome.
 
 Enjoy building your dynamic reports!
